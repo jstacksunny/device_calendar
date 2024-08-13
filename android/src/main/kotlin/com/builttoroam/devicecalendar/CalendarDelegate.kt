@@ -589,12 +589,13 @@ class CalendarDelegate(binding: ActivityPluginBinding?, context: Context) :
         }.toTypedArray()
         contentResolver.bulkInsert(CalendarContract.Reminders.CONTENT_URI, remindersContentValues)
 
+
         /// 设置闹钟提醒
         var extendedPropUri = CalendarContract.ExtendedProperties.CONTENT_URI
         extendedPropUri = extendedPropUri.buildUpon()
             .appendQueryParameter(CALLER_IS_SYNCADAPTER, "true")
-            .appendQueryParameter(CalendarContract.Calendars.ACCOUNT_NAME, "Gsd Admin")
-            .appendQueryParameter(CalendarContract.Calendars.ACCOUNT_TYPE, "Gsd Admin").build()
+            .appendQueryParameter(CalendarContract.Calendars.ACCOUNT_NAME, CalendarContract.ACCOUNT_TYPE_LOCAL)
+            .appendQueryParameter(CalendarContract.Calendars.ACCOUNT_TYPE, CalendarContract.ACCOUNT_TYPE_LOCAL).build()
         val extendedProperties = ContentValues()
         extendedProperties.put(CalendarContract.ExtendedProperties.EVENT_ID, eventId);
         extendedProperties.put(CalendarContract.ExtendedProperties.VALUE, "{\"need_alarm\":true}")
