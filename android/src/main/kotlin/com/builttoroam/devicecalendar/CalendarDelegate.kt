@@ -98,6 +98,7 @@ class CalendarDelegate(binding: ActivityPluginBinding?, context: Context) :
                 RETRIEVE_CALENDARS_REQUEST_CODE -> {
                     retrieveCalendars(cachedValues.pendingChannelResult)
                 }
+
                 RETRIEVE_EVENTS_REQUEST_CODE -> {
                     retrieveEvents(
                         cachedValues.calendarId,
@@ -107,9 +108,11 @@ class CalendarDelegate(binding: ActivityPluginBinding?, context: Context) :
                         cachedValues.pendingChannelResult
                     )
                 }
+
                 RETRIEVE_CALENDAR_REQUEST_CODE -> {
                     retrieveCalendar(cachedValues.calendarId, cachedValues.pendingChannelResult)
                 }
+
                 CREATE_OR_UPDATE_EVENT_REQUEST_CODE -> {
                     createOrUpdateEvent(
                         cachedValues.calendarId,
@@ -117,6 +120,7 @@ class CalendarDelegate(binding: ActivityPluginBinding?, context: Context) :
                         cachedValues.pendingChannelResult
                     )
                 }
+
                 DELETE_EVENT_REQUEST_CODE -> {
                     deleteEvent(
                         cachedValues.calendarId,
@@ -124,9 +128,11 @@ class CalendarDelegate(binding: ActivityPluginBinding?, context: Context) :
                         cachedValues.pendingChannelResult
                     )
                 }
+
                 REQUEST_PERMISSIONS_REQUEST_CODE -> {
                     finishWithSuccess(permissionGranted, cachedValues.pendingChannelResult)
                 }
+
                 DELETE_CALENDAR_REQUEST_CODE -> {
                     deleteCalendar(cachedValues.calendarId, cachedValues.pendingChannelResult)
                 }
@@ -582,6 +588,18 @@ class CalendarDelegate(binding: ActivityPluginBinding?, context: Context) :
             }
         }.toTypedArray()
         contentResolver.bulkInsert(CalendarContract.Reminders.CONTENT_URI, remindersContentValues)
+
+        /// 设置闹钟提醒
+        var extendedPropUri = CalendarContract.ExtendedProperties.CONTENT_URI
+        extendedPropUri = extendedPropUri.buildUpon()
+            .appendQueryParameter(CALLER_IS_SYNCADAPTER, "true")
+            .appendQueryParameter(CalendarContract.Calendars.ACCOUNT_NAME, "Gsd Admin")
+            .appendQueryParameter(CalendarContract.Calendars.ACCOUNT_TYPE, "Gsd Admin").build()
+        val extendedProperties = ContentValues()
+        extendedProperties.put(CalendarContract.ExtendedProperties.EVENT_ID, eventId);
+        extendedProperties.put(CalendarContract.ExtendedProperties.VALUE, "{\"need_alarm\":true}")
+        extendedProperties.put(CalendarContract.ExtendedProperties.NAME, "agenda_info")
+        var uriExtended = contentResolver.insert(extendedPropUri, extendedProperties)
     }
 
     private fun buildEventContentValues(event: Event, calendarId: String): ContentValues {
@@ -596,6 +614,9 @@ class CalendarDelegate(binding: ActivityPluginBinding?, context: Context) :
         values.put(Events.CUSTOM_APP_URI, event.eventURL)
         values.put(Events.CALENDAR_ID, calendarId)
         values.put(Events.AVAILABILITY, getAvailability(event.availability))
+        //设置有闹钟提醒，但是经测试，此方案无效
+        values.put(CalendarContract.Events.HAS_ALARM, 1)
+
         var status: Int? = getEventStatus(event.eventStatus)
         if (status != null) {
             values.put(Events.STATUS, status)
@@ -865,8 +886,10 @@ class CalendarDelegate(binding: ActivityPluginBinding?, context: Context) :
 
     private fun arePermissionsGranted(): Boolean {
         if (atLeastAPI(23) && _binding != null) {
-            val writeCalendarPermissionGranted = _binding!!.activity.checkSelfPermission(Manifest.permission.WRITE_CALENDAR) == PackageManager.PERMISSION_GRANTED
-            val readCalendarPermissionGranted = _binding!!.activity.checkSelfPermission(Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED
+            val writeCalendarPermissionGranted =
+                _binding!!.activity.checkSelfPermission(Manifest.permission.WRITE_CALENDAR) == PackageManager.PERMISSION_GRANTED
+            val readCalendarPermissionGranted =
+                _binding!!.activity.checkSelfPermission(Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED
             return writeCalendarPermissionGranted && readCalendarPermissionGranted
         }
 
@@ -1068,6 +1091,7 @@ class CalendarDelegate(binding: ActivityPluginBinding?, context: Context) :
             Events.CAL_ACCESS_OWNER,
             Events.CAL_ACCESS_EDITOR
             -> false
+
             else -> true
         }
     }
@@ -1256,7 +1280,7 @@ class CalendarDelegate(binding: ActivityPluginBinding?, context: Context) :
         else -> null
     }
 
-    private fun parseEventStatus(status: Int): EventStatus? = when(status) {
+    private fun parseEventStatus(status: Int): EventStatus? = when (status) {
         Events.STATUS_CONFIRMED -> EventStatus.CONFIRMED
         Events.STATUS_CANCELED -> EventStatus.CANCELED
         Events.STATUS_TENTATIVE -> EventStatus.TENTATIVE
