@@ -584,7 +584,7 @@ class CalendarDelegate(binding: ActivityPluginBinding?, context: Context) :
             ContentValues().apply {
                 put(CalendarContract.Reminders.EVENT_ID, eventId)
                 put(CalendarContract.Reminders.MINUTES, it.minutes)
-                put(CalendarContract.Reminders.METHOD, CalendarContract.Reminders.METHOD_ALERT)
+                put(CalendarContract.Reminders.METHOD, CalendarContract.Reminders.METHOD_ALARM)
             }
         }.toTypedArray()
         contentResolver.bulkInsert(CalendarContract.Reminders.CONTENT_URI, remindersContentValues)
